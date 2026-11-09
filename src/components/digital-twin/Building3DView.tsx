@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useSimulation } from '../../context/SimulationContext';
+import { useTheme } from '../../context/ThemeContext';
 import { RoomState, FloorId, RoomId } from '../../types';
 import { Layers, RotateCw, Sparkles } from 'lucide-react';
 
@@ -11,6 +12,7 @@ interface Building3DViewProps {
 export const Building3DView: React.FC<Building3DViewProps> = ({ onSelectRoom }) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const { rooms, activeFloorView, setActiveFloorView, setSelectedRoomId } = useSimulation();
+  const { isDark } = useTheme();
 
   const [hoveredRoom, setHoveredRoom] = useState<RoomState | null>(null);
   const [autoRotate, setAutoRotate] = useState<boolean>(true);
@@ -19,22 +21,34 @@ export const Building3DView: React.FC<Building3DViewProps> = ({ onSelectRoom }) 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const gridHelperRef = useRef<THREE.GridHelper | null>(null);
   const roomMeshesRef = useRef<Map<RoomId, THREE.Mesh>>(new Map());
   const animationFrameIdRef = useRef<number>(0);
   const isDraggingRef = useRef<boolean>(false);
   const previousMousePositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Get color for room status on light theme
+  // Dynamically respond to Theme Mode changes in 3D WebGL Canvas
+  useEffect(() => {
+    if (sceneRef.current) {
+      const bgColor = isDark ? 0x0A0F1D : 0xF7F5F0;
+      sceneRef.current.background = new THREE.Color(bgColor);
+      if (sceneRef.current.fog) {
+        sceneRef.current.fog = new THREE.FogExp2(bgColor, isDark ? 0.015 : 0.012);
+      }
+    }
+  }, [isDark]);
+
+  // Get color for room status
   const getStatusColor = (status: RoomState['status']) => {
     switch (status) {
       case 'low':
-        return 0x2E7D5B; // Calm Green
+        return isDark ? 0x10B981 : 0x2E7D5B; // Green
       case 'normal':
-        return 0x1D4ED8; // Blue
+        return isDark ? 0x38BDF8 : 0x1D4ED8; // Blue
       case 'high':
-        return 0xD97706; // Amber
+        return isDark ? 0xFBBF24 : 0xD97706; // Amber
       case 'critical':
-        return 0xD64545; // Calm Red
+        return isDark ? 0xF87171 : 0xD64545; // Red
       default:
         return 0x0284C7;
     }
@@ -47,10 +61,10 @@ export const Building3DView: React.FC<Building3DViewProps> = ({ onSelectRoom }) 
     const width = container.clientWidth;
     const height = container.clientHeight;
 
-    // Scene with off-white background
+    const initialBg = isDark ? 0x0A0F1D : 0xF7F5F0;
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xF7F5F0);
-    scene.fog = new THREE.FogExp2(0xF7F5F0, 0.012);
+    scene.background = new THREE.Color(initialBg);
+    scene.fog = new THREE.FogExp2(initialBg, isDark ? 0.015 : 0.012);
     sceneRef.current = scene;
 
     // Camera
@@ -79,10 +93,13 @@ export const Building3DView: React.FC<Building3DViewProps> = ({ onSelectRoom }) 
     dirLight2.position.set(-20, 25, -20);
     scene.add(dirLight2);
 
-    // Ground Grid on off-white
-    const gridHelper = new THREE.GridHelper(60, 30, 0xD3CEC4, 0xE7E3DA);
+    // Ground Grid
+    const gridColor1 = isDark ? 0x0284C7 : 0xD3CEC4;
+    const gridColor2 = isDark ? 0x1E293B : 0xE7E3DA;
+    const gridHelper = new THREE.GridHelper(60, 30, gridColor1, gridColor2);
     gridHelper.position.y = -0.05;
     scene.add(gridHelper);
+    gridHelperRef.current = gridHelper;
 
     // Foundation Base
     const baseGeo = new THREE.BoxGeometry(44, 0.6, 26);

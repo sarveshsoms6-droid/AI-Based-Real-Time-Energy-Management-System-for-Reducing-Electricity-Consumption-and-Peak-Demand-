@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSimulation } from '../context/SimulationContext';
+import { useTheme } from '../context/ThemeContext';
 import {
   Settings,
   DollarSign,
@@ -12,6 +13,9 @@ import {
   ShieldCheck,
   Radio,
   Sliders,
+  Sun,
+  Moon,
+  Palette,
 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
@@ -26,6 +30,8 @@ export const SettingsPage: React.FC = () => {
     setHardwareMode,
     resetSimulation,
   } = useSimulation();
+
+  const { theme, isDark, setTheme, toggleTheme } = useTheme();
 
   const [tariffVal, setTariffVal] = useState(tariffs.energyTariffINRPerKWh);
   const [demandChargeVal, setDemandChargeVal] = useState(tariffs.peakDemandChargeINRPerKW);
@@ -80,6 +86,80 @@ export const SettingsPage: React.FC = () => {
           <span>{savedToast}</span>
         </div>
       )}
+
+      {/* Theme Selection Card */}
+      <div className="bg-white border border-border-soft rounded-2xl p-6 shadow-xs font-mono text-xs">
+        <div className="flex flex-wrap items-center justify-between pb-4 border-b border-border-soft gap-y-2">
+          <div className="flex items-center space-x-2.5">
+            <Palette className="w-5 h-5 text-blue-600" />
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">Visual Interface & Theme Mode</h2>
+              <p className="text-[11px] text-slate-500 font-sans mt-0.5">
+                Toggle between Light Mode (academic off-white) and Dark Mode (SCADA deep navy cyber)
+              </p>
+            </div>
+          </div>
+          <span className="text-[11px] font-mono font-bold px-2.5 py-1 rounded bg-blue-50 text-blue-800 border border-blue-200">
+            Active: {theme === 'light' ? 'LIGHT (OFF-WHITE)' : 'DARK (SCADA NAVY)'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          {/* Light Mode Option */}
+          <button
+            onClick={() => setTheme('light')}
+            className={`p-4 rounded-xl border text-left transition-all flex items-start space-x-3.5 ${
+              theme === 'light'
+                ? 'border-blue-500 bg-blue-50/40 shadow-xs'
+                : 'border-border-soft bg-slate-50/50 hover:bg-slate-100 hover:border-slate-300'
+            }`}
+          >
+            <div className={`p-2.5 rounded-lg border ${
+              theme === 'light' ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-slate-100 text-slate-500 border-border-soft'
+            }`}>
+              <Sun className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900 text-xs">Light Mode (Off-White)</span>
+                {theme === 'light' && (
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">Active</span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 font-sans mt-1 leading-relaxed">
+                Clean institutional off-white background (#F7F5F0), pure white cards, soft borders (#E7E3DA), and dark grey typography (#1F2933).
+              </p>
+            </div>
+          </button>
+
+          {/* Dark Mode Option */}
+          <button
+            onClick={() => setTheme('dark')}
+            className={`p-4 rounded-xl border text-left transition-all flex items-start space-x-3.5 ${
+              theme === 'dark'
+                ? 'border-blue-500 bg-slate-100 shadow-xs'
+                : 'border-border-soft bg-slate-50/50 hover:bg-slate-100 hover:border-slate-300'
+            }`}
+          >
+            <div className={`p-2.5 rounded-lg border ${
+              theme === 'dark' ? 'bg-indigo-100 text-indigo-800 border-indigo-300' : 'bg-slate-100 text-slate-500 border-border-soft'
+            }`}>
+              <Moon className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900 text-xs">Dark Mode (SCADA Deep Navy)</span>
+                {theme === 'dark' && (
+                  <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded">Active</span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 font-sans mt-1 leading-relaxed">
+                High-contrast industrial telemetry mode with deep midnight navy surfaces (#0A0F1D / #0F172A), cyber accents, and luminescent gauges.
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
 
       {/* Grid: Main Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -3,29 +3,54 @@
 @tailwind utilities;
 
 @layer base {
-  body {
-    background-color: #F7F5F0;
-    color: #1F2933;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  :root {
+    --color-page: #F7F5F0;
+    --color-card: #FFFFFF;
+    --color-card-subtle: #FAF8F5;
+    --color-border-soft: #E7E3DA;
+    --color-border-strong: #D3CEC4;
+    --color-text-primary: #1F2933;
+    --color-text-secondary: #52606D;
+    --color-text-muted: #7B8794;
   }
 
-  /* Clean light theme scrollbar */
+  .dark {
+    --color-page: #0A0F1D;
+    --color-card: #0F172A;
+    --color-card-subtle: #162032;
+    --color-border-soft: #1E293B;
+    --color-border-strong: #334155;
+    --color-text-primary: #F8FAFC;
+    --color-text-secondary: #CBD5E1;
+    --color-text-muted: #94A3B8;
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-page);
+    color: var(--color-text-primary);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Scrollbar styles */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #F7F5F0;
+    background: var(--color-page);
   }
   ::-webkit-scrollbar-thumb {
-    background: #D3CEC4;
+    background: var(--color-border-strong);
     border-radius: 3px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #9AA5B1;
+    background: var(--color-text-muted);
   }
 }
 
+/* Light / Dark SCADA blueprint grid */
 .scada-grid {
   background-size: 28px 28px;
   background-image: 
@@ -33,6 +58,205 @@
     linear-gradient(to bottom, rgba(31, 41, 51, 0.035) 1px, transparent 1px);
 }
 
+.dark .scada-grid {
+  background-size: 28px 28px;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+}
+
 .card-shadow {
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+}
+
+/* =========================================================================
+   DARK MODE COMPONENT OVERRIDES
+   Ensures seamless 100% theme switching without requiring manual multi-class rewrites
+   ========================================================================= */
+
+.dark .bg-page {
+  background-color: #0A0F1D !important;
+}
+
+.dark .bg-white {
+  background-color: #0F172A !important;
+}
+
+.dark .bg-slate-50,
+.dark .bg-slate-50\/80,
+.dark .bg-slate-50\/70,
+.dark .bg-slate-50\/50 {
+  background-color: #162032 !important;
+}
+
+.dark .bg-slate-100 {
+  background-color: #1E293B !important;
+}
+
+.dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+.dark .border-border-soft {
+  border-color: #1E293B !important;
+}
+
+.dark .text-slate-900 {
+  color: #F8FAFC !important;
+}
+
+.dark .text-slate-800 {
+  color: #E2E8F0 !important;
+}
+
+.dark .text-slate-700 {
+  color: #CBD5E1 !important;
+}
+
+.dark .text-slate-600 {
+  color: #94A3B8 !important;
+}
+
+.dark .text-slate-500 {
+  color: #64748B !important;
+}
+
+.dark .text-slate-400 {
+  color: #94A3B8 !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #162032 !important;
+  color: #F8FAFC !important;
+  border-color: #334155 !important;
+}
+
+.dark input::placeholder {
+  color: #64748B !important;
+}
+
+/* Badge and Tag backgrounds in dark mode */
+.dark .bg-blue-50 {
+  background-color: rgba(30, 64, 175, 0.25) !important;
+  color: #93C5FD !important;
+}
+.dark .bg-blue-100 {
+  background-color: rgba(30, 64, 175, 0.35) !important;
+  color: #BFDBFE !important;
+}
+.dark .bg-emerald-50,
+.dark .bg-emerald-50\/50 {
+  background-color: rgba(6, 78, 59, 0.25) !important;
+}
+.dark .bg-emerald-100 {
+  background-color: rgba(6, 78, 59, 0.35) !important;
+  color: #A7F3D0 !important;
+}
+.dark .bg-amber-50,
+.dark .bg-amber-50\/50 {
+  background-color: rgba(120, 53, 15, 0.25) !important;
+}
+.dark .bg-amber-100 {
+  background-color: rgba(120, 53, 15, 0.35) !important;
+  color: #FDE68A !important;
+}
+.dark .bg-rose-50,
+.dark .bg-rose-50\/60,
+.dark .bg-rose-50\/50 {
+  background-color: rgba(136, 19, 55, 0.25) !important;
+}
+.dark .bg-rose-100 {
+  background-color: rgba(136, 19, 55, 0.35) !important;
+  color: #FECDD3 !important;
+}
+.dark .bg-indigo-50 {
+  background-color: rgba(55, 48, 163, 0.25) !important;
+}
+.dark .bg-indigo-100 {
+  background-color: rgba(55, 48, 163, 0.35) !important;
+  color: #C7D2FE !important;
+}
+
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-slate-100:hover {
+  background-color: #1E293B !important;
+}
+
+.dark .hover\:bg-slate-200:hover {
+  background-color: #334155 !important;
+}
+
+/* High contrast colored texts in dark mode */
+.dark .text-blue-600,
+.dark .text-blue-700,
+.dark .text-blue-800 {
+  color: #60A5FA !important;
+}
+.dark .text-emerald-600,
+.dark .text-emerald-700,
+.dark .text-emerald-800 {
+  color: #34D399 !important;
+}
+.dark .text-amber-600,
+.dark .text-amber-700,
+.dark .text-amber-800,
+.dark .text-amber-900 {
+  color: #FBBF24 !important;
+}
+.dark .text-rose-600,
+.dark .text-rose-700,
+.dark .text-rose-800 {
+  color: #F87171 !important;
+}
+.dark .text-indigo-600,
+.dark .text-indigo-700,
+.dark .text-indigo-800 {
+  color: #818CF8 !important;
+}
+.dark .text-cyan-600,
+.dark .text-cyan-700 {
+  color: #38BDF8 !important;
+}
+
+/* Border colors for badges in dark mode */
+.dark .border-blue-200,
+.dark .border-blue-300 {
+  border-color: rgba(59, 130, 246, 0.35) !important;
+}
+.dark .border-emerald-200,
+.dark .border-emerald-300 {
+  border-color: rgba(16, 185, 129, 0.35) !important;
+}
+.dark .border-amber-200,
+.dark .border-amber-300 {
+  border-color: rgba(245, 158, 11, 0.35) !important;
+}
+.dark .border-rose-200,
+.dark .border-rose-300 {
+  border-color: rgba(244, 63, 94, 0.35) !important;
+}
+.dark .border-indigo-200,
+.dark .border-indigo-300 {
+  border-color: rgba(99, 102, 241, 0.35) !important;
+}
+
+/* Recharts Dark Overrides */
+.dark .recharts-default-tooltip {
+  background-color: #0F172A !important;
+  border-color: #334155 !important;
+  color: #F8FAFC !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: #1E293B !important;
+}
+
+.dark .recharts-text,
+.dark .recharts-legend-item-text {
+  fill: #94A3B8 !important;
+  color: #94A3B8 !important;
 }

@@ -13,8 +13,11 @@ import {
   GitBranch,
   FileSpreadsheet,
   Settings,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useSimulation } from '../../context/SimulationContext';
+import { useTheme } from '../../context/ThemeContext';
 
 export type NavPageId =
   | 'overview'
@@ -45,6 +48,7 @@ interface NavItem {
 
 export const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage }) => {
   const { aggregates, timetableSavings } = useSimulation();
+  const { isDark, toggleTheme } = useTheme();
 
   const navItems: NavItem[] = [
     { id: 'overview', label: 'Overview Dashboard', icon: LayoutDashboard },
@@ -138,6 +142,27 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage }) =
               <span>Saved Today:</span>
               <span className="text-savings font-bold">₹{timetableSavings.savedCostTodayINR.toLocaleString()}</span>
             </div>
+          </div>
+
+          {/* Quick Theme Switcher */}
+          <div className="mt-2.5 pt-2 border-t border-border-soft flex items-center justify-between">
+            <span className="text-[10px] text-slate-500 font-medium">Appearance:</span>
+            <button
+              onClick={toggleTheme}
+              className="flex items-center space-x-1.5 px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-[10px] font-mono text-slate-700 transition-colors shadow-2xs"
+            >
+              {isDark ? (
+                <>
+                  <Sun className="w-3 h-3 text-amber-400" />
+                  <span className="font-semibold">Dark Mode</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-3 h-3 text-slate-700" />
+                  <span className="font-semibold">Light Mode</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>

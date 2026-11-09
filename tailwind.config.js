@@ -8,11 +8,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Light Off-White theme palette requested
-        page: '#F7F5F0',
-        card: '#FFFFFF',
-        'border-soft': '#E7E3DA',
-        'border-strong': '#D3CEC4',
+        // Theme palette with CSS variable fallbacks
+        page: 'var(--color-page, #F7F5F0)',
+        card: 'var(--color-card, #FFFFFF)',
+        'border-soft': 'var(--color-border-soft, #E7E3DA)',
+        'border-strong': 'var(--color-border-strong, #D3CEC4)',
         
         // Text shades
         slate: {

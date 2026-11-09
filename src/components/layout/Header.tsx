@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSimulation } from '../../context/SimulationContext';
+import { useTheme } from '../../context/ThemeContext';
 import {
   Play,
   Pause,
@@ -9,6 +10,8 @@ import {
   Activity,
   Cpu,
   GraduationCap,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 export const Header: React.FC = () => {
@@ -22,6 +25,8 @@ export const Header: React.FC = () => {
     resetSimulation,
     setHardwareMode,
   } = useSimulation();
+
+  const { theme, isDark, toggleTheme } = useTheme();
 
   return (
     <header className="h-16 border-b border-border-soft bg-white px-6 flex items-center justify-between z-30 select-none shadow-xs">
@@ -122,6 +127,20 @@ export const Header: React.FC = () => {
           className="p-2 rounded-lg bg-slate-100 border border-border-soft text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 transition-all"
         >
           <RotateCcw className="w-4 h-4" />
+        </button>
+
+        {/* Theme Mode Toggle (Light / Dark) */}
+        <button
+          onClick={toggleTheme}
+          title={isDark ? 'Switch to Light Mode (Off-White)' : 'Switch to Dark Mode (SCADA Deep Navy)'}
+          className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 border border-border-soft transition-all flex items-center justify-center text-slate-700 shadow-2xs"
+          aria-label="Toggle Theme"
+        >
+          {isDark ? (
+            <Sun className="w-4 h-4 text-amber-400" />
+          ) : (
+            <Moon className="w-4 h-4 text-slate-700" />
+          )}
         </button>
       </div>
     </header>

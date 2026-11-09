@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ThemeProvider } from './context/ThemeContext';
 import { SimulationProvider, useSimulation } from './context/SimulationContext';
 import { Header } from './components/layout/Header';
 import { StatusTicker } from './components/layout/StatusTicker';
@@ -87,8 +88,10 @@ const MainLayout: React.FC = () => {
 
 export default function App() {
   return (
-    <SimulationProvider>
-      <MainLayout />
-    </SimulationProvider>
+    <ThemeProvider>
+      <SimulationProvider>
+        <MainLayout />
+      </SimulationProvider>
+    </ThemeProvider>
   );
 }
