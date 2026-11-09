@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #F7F5F0;
+    color: #1F2933;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Clean light theme scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #F7F5F0;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #D3CEC4;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9AA5B1;
+  }
+}
+
+.scada-grid {
+  background-size: 28px 28px;
+  background-image: 
+    linear-gradient(to right, rgba(31, 41, 51, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(31, 41, 51, 0.035) 1px, transparent 1px);
+}
+
+.card-shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+}
