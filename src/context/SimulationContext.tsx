@@ -17,6 +17,12 @@ import {
   UsageFactors,
   DayOfWeek,
   TimetableEnergySavingsSummary,
+  RoomAuditProfile,
+  ApplianceAuditItem,
+  CircuitLabPIRState,
+  ACIntelligentRecommendation,
+  EnergyManagementRecommendation,
+  BeforeAfterComparison,
 } from '../types';
 import {
   DEFAULT_ELECTRICAL_RATINGS,
@@ -30,6 +36,10 @@ import {
   DEFAULT_CALENDAR_DATA,
   DEFAULT_USAGE_FACTORS,
 } from '../data/timetableData';
+import {
+  DEFAULT_ROOM_AUDIT_PROFILES,
+  DEFAULT_CIRCUIT_LAB_PIR_STATES,
+} from '../data/defaultAuditData';
 import { calculateRoomElectrical } from '../engine/electricalCalculator';
 import { updateRoomThermalPhysics } from '../engine/physicsEngine';
 import { IDataProvider, SimulationDataProvider, ESP32DataProvider } from '../engine/dataProviders';
@@ -38,6 +48,12 @@ import {
   getActiveCalendarDayType,
   mapRoomToCode,
 } from '../engine/timetableEnergyEngine';
+import {
+  generateACIntelligentRecommendation,
+  generateBuildingManagementRecommendations,
+  calculateBeforeAfterComparison,
+  getPIRStatusLevel,
+} from '../engine/energyManagementEngine';
 
 interface SimulationContextType {
   rooms: RoomState[];
@@ -123,6 +139,28 @@ interface SimulationContextType {
   updateElectricalRatings: (ratings: Partial<ElectricalRatings>) => void;
   updateTariffs: (tariffs: Partial<CostTariffSettings>) => void;
   updateWhatIfParams: (params: Partial<WhatIfParameters>) => void;
+
+  // Module 1: AI Energy Audit
+  auditProfiles: RoomAuditProfile[];
+  updateApplianceAuditConfig: (roomId: RoomId, applianceId: string, updates: Partial<ApplianceAuditItem>) => void;
+  resetAuditProfiles: () => void;
+
+  // Module 2: AI Energy Management & Action Centre
+  circuitLabPIRStates: Record<'ca_lab1' | 'ca_lab2', CircuitLabPIRState>;
+  updateCircuitLabPIR: (
+    roomId: 'ca_lab1' | 'ca_lab2',
+    occupantCount: number,
+    schedule?: { hour: number; expectedOccupancy: number }[]
+  ) => void;
+  acRecommendations: Record<'ca_lab1' | 'ca_lab2', ACIntelligentRecommendation>;
+  acceptACRecommendation: (roomId: 'ca_lab1' | 'ca_lab2') => void;
+  rejectACRecommendation: (roomId: 'ca_lab1' | 'ca_lab2') => void;
+  managementRecommendations: EnergyManagementRecommendation[];
+  acceptedManagementActionIds: string[];
+  acceptManagementAction: (actionId: string) => void;
+  rejectManagementAction: (actionId: string) => void;
+  resetManagementActions: () => void;
+  beforeAfterComparison: BeforeAfterComparison;
 }
 
 const SimulationContext = createContext<SimulationContextType | undefined>(undefined);
@@ -133,6 +171,9 @@ const LOCAL_STORAGE_KEY_TARIFFS = 'campusenergy_tariffs_v2';
 const LOCAL_STORAGE_KEY_TIMETABLE = 'campusenergy_timetable_v2';
 const LOCAL_STORAGE_KEY_CALENDAR = 'campusenergy_calendar_v2';
 const LOCAL_STORAGE_KEY_USAGE_FACTORS = 'campusenergy_usage_factors_v2';
+const LOCAL_STORAGE_KEY_AUDIT = 'campusenergy_audit_profiles_v2';
+const LOCAL_STORAGE_KEY_PIR = 'campusenergy_pir_states_v2';
+const LOCAL_STORAGE_KEY_ACTIONS = 'campusenergy_mgmt_actions_v2';
 
 function generateInitialHistory(currentDemandKW: number): HistoricalDataPoint[] {
   const points: HistoricalDataPoint[] = [];
@@ -238,6 +279,36 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [activeDayOfWeek, setActiveDayOfWeek] = useState<DayOfWeek>('Monday');
   const [activeCalendarDate, setActiveCalendarDate] = useState<string>('2026-11-09');
 
+  // Module 1: AI Energy Audit state
+  const [auditProfiles, setAuditProfiles] = useState<RoomAuditProfile[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_AUDIT);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_ROOM_AUDIT_PROFILES;
+  });
+
+  // Module 2: Circuit Lab PIR Occupancy state
+  const [circuitLabPIRStates, setCircuitLabPIRStates] = useState<Record<'ca_lab1' | 'ca_lab2', CircuitLabPIRState>>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_PIR);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULT_CIRCUIT_LAB_PIR_STATES;
+  });
+
+  // Module 2: Management Accepted Action IDs
+  const [acceptedManagementActionIds, setAcceptedManagementActionIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY_ACTIONS);
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  });
+
   const [isSimulating, setIsSimulating] = useState<boolean>(true);
   const [simSpeed, setSimSpeed] = useState<1 | 5 | 10 | 60>(1);
   const [simTimeMinutes, setSimTimeMinutes] = useState<number>(9 * 60 + 15); // 09:15 AM (Class in session)
@@ -287,6 +358,24 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       localStorage.setItem(LOCAL_STORAGE_KEY_USAGE_FACTORS, JSON.stringify(usageFactors));
     } catch {}
   }, [usageFactors]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_AUDIT, JSON.stringify(auditProfiles));
+    } catch {}
+  }, [auditProfiles]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_PIR, JSON.stringify(circuitLabPIRStates));
+    } catch {}
+  }, [circuitLabPIRStates]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY_ACTIONS, JSON.stringify(acceptedManagementActionIds));
+    } catch {}
+  }, [acceptedManagementActionIds]);
 
   // Format simulated time string
   const simTimeString = useMemo(() => {
@@ -904,6 +993,227 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setWhatIfParams((prev) => ({ ...prev, ...params }));
   }, []);
 
+  // Module 1: Audit Callbacks
+  const updateApplianceAuditConfig = useCallback((roomId: RoomId, applianceId: string, updates: Partial<ApplianceAuditItem>) => {
+    setAuditProfiles((prev) =>
+      prev.map((profile) => {
+        if (profile.roomId === roomId) {
+          return {
+            ...profile,
+            appliances: profile.appliances.map((app) => (app.id === applianceId ? { ...app, ...updates } : app)),
+          };
+        }
+        return profile;
+      })
+    );
+  }, []);
+
+  const resetAuditProfiles = useCallback(() => {
+    localStorage.removeItem(LOCAL_STORAGE_KEY_AUDIT);
+    setAuditProfiles(DEFAULT_ROOM_AUDIT_PROFILES);
+  }, []);
+
+  // Module 2: Circuit Lab PIR Callbacks
+  const updateCircuitLabPIR = useCallback((
+    roomId: 'ca_lab1' | 'ca_lab2',
+    occupantCount: number,
+    schedule?: { hour: number; expectedOccupancy: number }[]
+  ) => {
+    const safeCount = Math.max(0, Math.min(50, occupantCount));
+    setCircuitLabPIRStates((prev) => {
+      const current = prev[roomId];
+      const newStatus = getPIRStatusLevel(safeCount, current.maxCapacity);
+      const hours = Math.floor((simTimeMinutes / 60) % 24);
+      const mins = Math.floor(simTimeMinutes % 60);
+      const nowStr = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+      const newHistory = [...current.history.slice(-7), { timestamp: nowStr, count: safeCount }];
+      return {
+        ...prev,
+        [roomId]: {
+          ...current,
+          occupantCount: safeCount,
+          statusLevel: newStatus,
+          hourlySchedule: schedule || current.hourlySchedule,
+          history: newHistory,
+          lastUpdated: 'Just now (Simulated)',
+        },
+      };
+    });
+
+    // Synchronize into RoomState occupancy so thermal physics calculates Q_internal = occupancy * 100 W!
+    setRooms((prev) =>
+      prev.map((r) => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            envParams: {
+              ...r.envParams,
+              occupancy: safeCount,
+            },
+          };
+        }
+        return r;
+      })
+    );
+  }, [simTimeMinutes]);
+
+  // Compute Intelligent AC Recommendations for ca_lab1 and ca_lab2
+  const acRecommendations = useMemo(() => {
+    const lab1 = rooms.find((r) => r.id === 'ca_lab1');
+    const lab2 = rooms.find((r) => r.id === 'ca_lab2');
+    return {
+      ca_lab1: lab1
+        ? generateACIntelligentRecommendation(lab1, circuitLabPIRStates.ca_lab1, 24.0, 26.0, tariffs.energyTariffINRPerKWh)
+        : ({} as ACIntelligentRecommendation),
+      ca_lab2: lab2
+        ? generateACIntelligentRecommendation(lab2, circuitLabPIRStates.ca_lab2, 24.0, 26.0, tariffs.energyTariffINRPerKWh)
+        : ({} as ACIntelligentRecommendation),
+    };
+  }, [rooms, circuitLabPIRStates, tariffs.energyTariffINRPerKWh]);
+
+  const acceptACRecommendation = useCallback((roomId: 'ca_lab1' | 'ca_lab2') => {
+    const rec = acRecommendations[roomId];
+    if (!rec) return;
+
+    setRooms((prev) =>
+      prev.map((r) => {
+        if (r.id === roomId) {
+          return {
+            ...r,
+            physics: {
+              ...r.physics,
+              targetSetpointTemp: rec.recommendedSetpoint,
+            },
+            appliances:
+              r.appliances.type === 'circuit_lab'
+                ? {
+                    ...r.appliances,
+                    data: {
+                      ...r.appliances.data,
+                      acUnits: [rec.recommendedMode, rec.recommendedMode],
+                    },
+                  }
+                : r.appliances,
+          };
+        }
+        return r;
+      })
+    );
+  }, [acRecommendations]);
+
+  const rejectACRecommendation = useCallback((roomId: 'ca_lab1' | 'ca_lab2') => {
+    // Acknowledged reject
+  }, []);
+
+  // Compute Building Management Recommendations
+  const managementRecommendations = useMemo(() => {
+    return generateBuildingManagementRecommendations(rooms, tariffs.energyTariffINRPerKWh, acceptedManagementActionIds);
+  }, [rooms, tariffs.energyTariffINRPerKWh, acceptedManagementActionIds]);
+
+  const acceptManagementAction = useCallback((actionId: string) => {
+    setAcceptedManagementActionIds((prev) => (prev.includes(actionId) ? prev : [...prev, actionId]));
+
+    if (actionId === 'mgmt_ac_circuit_labs') {
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.id === 'ca_lab1' || r.id === 'ca_lab2'
+            ? { ...r, physics: { ...r.physics, targetSetpointTemp: 25.0 } }
+            : r
+        )
+      );
+    } else if (actionId === 'mgmt_light_unoccupied_shutoff') {
+      setRooms((prev) =>
+        prev.map((r) => {
+          if (r.type === 'classroom' && r.envParams.occupancy === 0 && r.appliances.type === 'classroom') {
+            return {
+              ...r,
+              appliances: {
+                ...r.appliances,
+                data: {
+                  ...r.appliances.data,
+                  tubeLights: Array(10).fill(false),
+                },
+              },
+            };
+          }
+          return r;
+        })
+      );
+    } else if (actionId === 'mgmt_fan_speed_curtailment') {
+      setRooms((prev) =>
+        prev.map((r) => {
+          if (r.type === 'classroom' && r.envParams.occupancy === 0 && r.appliances.type === 'classroom') {
+            return {
+              ...r,
+              appliances: {
+                ...r.appliances,
+                data: {
+                  ...r.appliances.data,
+                  fans: Array(6).fill(false),
+                },
+              },
+            };
+          }
+          return r;
+        })
+      );
+    } else if (actionId === 'mgmt_pc_sleep_mode') {
+      setRooms((prev) =>
+        prev.map((r) => {
+          if (r.id === 'cp_lab2' && r.appliances.type === 'programming_lab') {
+            return {
+              ...r,
+              appliances: {
+                ...r.appliances,
+                data: {
+                  ...r.appliances.data,
+                  desktops: Array(32).fill(false),
+                },
+              },
+            };
+          }
+          return r;
+        })
+      );
+    } else if (actionId === 'mgmt_peak_clipping') {
+      setRooms((prev) =>
+        prev.map((r) => {
+          if ((r.id === 'ca_lab1' || r.id === 'ca_lab2') && r.appliances.type === 'circuit_lab') {
+            return {
+              ...r,
+              appliances: {
+                ...r.appliances,
+                data: {
+                  ...r.appliances.data,
+                  socketActive: false,
+                },
+              },
+            };
+          }
+          return r;
+        })
+      );
+    }
+  }, []);
+
+  const rejectManagementAction = useCallback((actionId: string) => {
+    setAcceptedManagementActionIds((prev) => prev.filter((id) => id !== actionId));
+  }, []);
+
+  const resetManagementActions = useCallback(() => {
+    setAcceptedManagementActionIds([]);
+  }, []);
+
+  const beforeAfterComparison = useMemo(() => {
+    const acceptedRecs = managementRecommendations.filter((r) => acceptedManagementActionIds.includes(r.id));
+    return calculateBeforeAfterComparison(
+      aggregates.currentBuildingDemandKW,
+      aggregates.predictedPeakDemandKW || 26.8,
+      acceptedRecs,
+      tariffs.energyTariffINRPerKWh
+    );
+  }, [aggregates.currentBuildingDemandKW, aggregates.predictedPeakDemandKW, managementRecommendations, acceptedManagementActionIds, tariffs.energyTariffINRPerKWh]);
+
   const resetSimulation = useCallback(() => {
     localStorage.removeItem(LOCAL_STORAGE_KEY_ROOMS);
     localStorage.removeItem(LOCAL_STORAGE_KEY_RATINGS);
@@ -911,6 +1221,9 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     localStorage.removeItem(LOCAL_STORAGE_KEY_TIMETABLE);
     localStorage.removeItem(LOCAL_STORAGE_KEY_CALENDAR);
     localStorage.removeItem(LOCAL_STORAGE_KEY_USAGE_FACTORS);
+    localStorage.removeItem(LOCAL_STORAGE_KEY_AUDIT);
+    localStorage.removeItem(LOCAL_STORAGE_KEY_PIR);
+    localStorage.removeItem(LOCAL_STORAGE_KEY_ACTIONS);
 
     setRatings(DEFAULT_ELECTRICAL_RATINGS);
     setTariffs(DEFAULT_TARIFF_SETTINGS);
@@ -918,6 +1231,9 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setTimetable(SAMPLE_TIMETABLE_DATA);
     setCalendar(DEFAULT_CALENDAR_DATA);
     setUsageFactors(DEFAULT_USAGE_FACTORS);
+    setAuditProfiles(DEFAULT_ROOM_AUDIT_PROFILES);
+    setCircuitLabPIRStates(DEFAULT_CIRCUIT_LAB_PIR_STATES);
+    setAcceptedManagementActionIds([]);
 
     const initial = createDefaultRooms(DEFAULT_ELECTRICAL_RATINGS);
     setRooms(initial);
@@ -989,6 +1305,20 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         updateElectricalRatings,
         updateTariffs,
         updateWhatIfParams,
+        auditProfiles,
+        updateApplianceAuditConfig,
+        resetAuditProfiles,
+        circuitLabPIRStates,
+        updateCircuitLabPIR,
+        acRecommendations,
+        acceptACRecommendation,
+        rejectACRecommendation,
+        managementRecommendations,
+        acceptedManagementActionIds,
+        acceptManagementAction,
+        rejectManagementAction,
+        resetManagementActions,
+        beforeAfterComparison,
       }}
     >
       {children}

@@ -368,3 +368,191 @@ export interface HistoricalDataPoint {
   temperature: number;
   energyKWhCumulative: number;
 }
+
+// ==================== MODULE 1: AI ENERGY AUDIT MODELS ====================
+
+export type LightingTechType = 'fluorescent' | 'led' | 'cfl' | 'incandescent' | 'custom';
+export type ACTechType = 'fixed_speed' | 'inverter' | 'custom';
+export type FanTechType = 'induction' | 'bldc' | 'custom';
+export type EquipmentTechType = 'desktop' | 'laptop' | 'projector' | 'lab_equipment' | 'custom';
+export type ApplianceEfficiencyRating = 'High' | 'Medium' | 'Low' | 'Poor';
+
+export interface ProposedReplacement {
+  name: string;
+  techType: string;
+  ratedWattsPerUnit: number;
+  unitCostINR: number;
+  beeStarRating?: number;
+}
+
+export interface ApplianceAuditItem {
+  id: string;
+  category: 'lighting' | 'ac' | 'fan' | 'equipment';
+  name: string;
+  techType: LightingTechType | ACTechType | FanTechType | EquipmentTechType;
+  quantity: number;
+  ratedWattsPerUnit: number;
+  operatingHoursPerDay: number;
+  operatingDaysPerWeek: number;
+  applianceAgeYears?: number;
+  efficiencyCategory: ApplianceEfficiencyRating;
+  // AC-specific parameters
+  acTonnage?: number;
+  beeStarRating?: 1 | 2 | 3 | 4 | 5;
+  isInverter?: boolean;
+  temperatureSetpoint?: number;
+  coolingCapacityWatts?: number;
+  // Equipment / other
+  operatingSchedule?: string;
+  // Proposed energy efficient replacement
+  proposedReplacement?: ProposedReplacement;
+}
+
+export interface RoomAuditProfile {
+  roomId: RoomId;
+  roomName: string;
+  floor: FloorId;
+  appliances: ApplianceAuditItem[];
+}
+
+export interface AuditComparisonItem {
+  category: string;
+  currentTech: string;
+  proposedTech: string;
+  currentWatts: number;
+  proposedWatts: number;
+  currentDailyKWh: number;
+  proposedDailyKWh: number;
+  dailyKWhSaved: number;
+  annualKWhSaved: number;
+  annualCostSavedINR: number;
+  totalImplementationCostINR: number;
+  paybackYears: number;
+}
+
+export interface AuditSummaryMetrics {
+  totalConnectedLoadKW: number;
+  actualOperatingDemandKW: number;
+  estimatedAnnualEnergyKWh: number;
+  estimatedAnnualCostINR: number;
+  highestApplianceCategory: string;
+  highestApplianceKWh: number;
+  highestConsumingRoom: string;
+  highestRoomKWh: number;
+  highestConsumingFloor: string;
+  highestFloorKWh: number;
+  potentialAnnualKWhSaved: number;
+  potentialAnnualCostSavedINR: number;
+  totalRetrofitCostINR: number;
+  overallPaybackYears: number;
+}
+
+export interface AuditRecommendation {
+  id: string;
+  priority: 'HIGH' | 'MEDIUM' | 'LOW';
+  category: string;
+  title: string;
+  identifiedProblem: string;
+  recommendedAction: string;
+  engineeringReason: string;
+  dailySavingsKWh: number;
+  annualSavingsKWh: number;
+  annualCostSavingsINR: number;
+  estimatedCostINR: number;
+  paybackYears: number;
+  whatIfPreset?: Partial<WhatIfParameters>;
+}
+
+// ==================== MODULE 2: AI ENERGY MANAGEMENT MODELS ====================
+
+export type ForecastTimeScale = 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+
+export interface MultiScaleForecastSlot {
+  label: string;
+  timestamp: string;
+  expectedDemandKW: number;
+  peakDemandKW: number;
+  energyKWh: number;
+  costINR: number;
+  lowerBoundKW: number;
+  upperBoundKW: number;
+  occupancyCount?: number;
+  isPeakSlot?: boolean;
+}
+
+export interface MultiScaleForecastResult {
+  timeScale: ForecastTimeScale;
+  slots: MultiScaleForecastSlot[];
+  totalEnergyKWh: number;
+  totalCostINR: number;
+  overallPeakKW: number;
+  overallPeakTime: string;
+  modelNotes: string[];
+}
+
+export type PIRStatusLevel = 'Empty' | 'Low' | 'Moderate' | 'High' | 'Full';
+
+export interface CircuitLabPIRState {
+  roomId: 'ca_lab1' | 'ca_lab2';
+  roomName: string;
+  occupantCount: number;
+  maxCapacity: number;
+  statusLevel: PIRStatusLevel;
+  hourlySchedule: { hour: number; expectedOccupancy: number }[];
+  history: { timestamp: string; count: number }[];
+  lastUpdated: string;
+}
+
+export interface ACIntelligentRecommendation {
+  roomId: 'ca_lab1' | 'ca_lab2';
+  roomName: string;
+  currentIndoorTemp: number;
+  currentSetpoint: number;
+  recommendedSetpoint: number;
+  currentMode: ACMode;
+  recommendedMode: ACMode;
+  reason: string;
+  occupantCount: number;
+  ambientTemp: number;
+  humidityPct: number;
+  isComfortOptimal: boolean;
+  powerSavingsKW: number;
+  hourlyCostSavingsINR: number;
+  dailyCostSavingsINR: number;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+}
+
+export type ManagementCategory = 'lighting' | 'fan' | 'ac' | 'computers' | 'peak' | 'planning';
+
+export interface EnergyManagementRecommendation {
+  id: string;
+  category: ManagementCategory;
+  title: string;
+  description: string;
+  action: string;
+  impactDemandKW: number;
+  dailyKWhSaved: number;
+  annualCostSavedINR: number;
+  priority: 'IMMEDIATE' | 'SHORT_TERM' | 'STRATEGIC';
+  targetRooms?: RoomId[];
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+}
+
+export interface BeforeAfterComparison {
+  beforeDemandKW: number;
+  afterDemandKW: number;
+  demandReductionKW: number;
+  beforePeakKW: number;
+  afterPeakKW: number;
+  peakReductionKW: number;
+  beforeDailyKWh: number;
+  afterDailyKWh: number;
+  dailyKWhReduction: number;
+  beforeAnnualKWh: number;
+  afterAnnualKWh: number;
+  annualKWhReduction: number;
+  beforeAnnualCostINR: number;
+  afterAnnualCostINR: number;
+  annualCostSavingsINR: number;
+  percentageReduction: number;
+}

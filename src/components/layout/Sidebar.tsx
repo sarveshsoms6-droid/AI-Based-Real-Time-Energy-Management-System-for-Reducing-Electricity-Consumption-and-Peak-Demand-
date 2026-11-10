@@ -15,13 +15,14 @@ import {
   Settings,
   Sun,
   Moon,
+  FileText,
+  Zap,
 } from 'lucide-react';
 import { useSimulation } from '../../context/SimulationContext';
 import { useTheme } from '../../context/ThemeContext';
 
 export type NavPageId =
   | 'overview'
-  | 'timetable'
   | 'digital_twin'
   | 'floor_management'
   | 'room_monitoring'
@@ -30,6 +31,9 @@ export type NavPageId =
   | 'ai_forecasting'
   | 'anomaly_detection'
   | 'peak_optimization'
+  | 'energy_audit'
+  | 'energy_management'
+  | 'timetable'
   | 'what_if'
   | 'reports'
   | 'settings';
@@ -52,7 +56,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage }) =
 
   const navItems: NavItem[] = [
     { id: 'overview', label: 'Overview Dashboard', icon: LayoutDashboard },
-    { id: 'timetable', label: 'EEE Timetable & Schedule', icon: Calendar, badge: 'Savings' },
     { id: 'digital_twin', label: 'Building Digital Twin', icon: Box, badge: '3D/2D' },
     { id: 'floor_management', label: 'Floor Management', icon: Layers },
     { id: 'room_monitoring', label: 'Room Monitoring', icon: Sliders },
@@ -61,6 +64,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage }) =
     { id: 'ai_forecasting', label: 'AI Energy Forecasting', icon: TrendingUp },
     { id: 'anomaly_detection', label: 'Anomaly Detection', icon: AlertOctagon, badge: 'Alerts' },
     { id: 'peak_optimization', label: 'Peak Demand Optimizer', icon: Sparkles, badge: 'LP' },
+    { id: 'energy_audit', label: 'AI Energy Audit', icon: FileText, badge: 'BEE' },
+    { id: 'energy_management', label: 'AI Energy Management', icon: Zap, badge: 'PIR/AC' },
+    { id: 'timetable', label: 'EEE Timetable & Schedule', icon: Calendar, badge: 'Savings' },
     { id: 'what_if', label: 'What-If Simulation', icon: GitBranch },
     { id: 'reports', label: 'Energy Reports', icon: FileSpreadsheet, badge: 'CSV' },
     { id: 'settings', label: 'Settings & Tariffs', icon: Settings },
