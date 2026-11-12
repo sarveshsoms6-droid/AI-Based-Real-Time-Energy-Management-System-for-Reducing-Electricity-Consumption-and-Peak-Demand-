@@ -295,7 +295,7 @@ export const TimetablePage: React.FC = () => {
             <span className="text-slate-900 font-bold text-sm">
               {timetableSavings.scheduledClassesNow} Rooms Active
             </span>
-            <span className="text-[10px] text-slate-500 block">Out of 9 EEE Monitored Rooms</span>
+            <span className="text-[10px] text-slate-500 block">Out of {roomInventory.length} EEE Monitored Rooms</span>
           </div>
         </div>
 
@@ -363,7 +363,7 @@ export const TimetablePage: React.FC = () => {
               onChange={(e) => setSelectedRoomFilter(e.target.value)}
               className="bg-white border border-border-soft rounded-lg px-2.5 py-1 text-slate-900 font-semibold outline-none"
             >
-              <option value="ALL">All EEE Rooms (9 Rooms)</option>
+              <option value="ALL">All EEE Rooms ({roomInventory.length} Rooms)</option>
               {roomInventory.map((r) => (
                 <option key={r.room} value={r.room}>
                   {r.room} – {r.name}

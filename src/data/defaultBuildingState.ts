@@ -409,7 +409,7 @@ export function createDefaultRooms(ratings: ElectricalRatings = DEFAULT_ELECTRIC
       name: 'Classroom 203 (Tutorial Hall)',
       floor: 2,
       type: 'classroom',
-      timetableRoomCode: 'CR105',
+      timetableRoomCode: 'CR203',
       relayOverrideActive: false,
       calculationMode: 'MODE_A_APPLIANCE',
       appliances: {

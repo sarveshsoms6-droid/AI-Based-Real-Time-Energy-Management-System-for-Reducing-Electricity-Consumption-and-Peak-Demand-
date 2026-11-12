@@ -494,9 +494,10 @@ export const SimulationProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       usageFactors,
       tariffs,
       dayType,
-      entry
+      entry,
+      ratings
     );
-  }, [rooms, roomInventory, simTimeMinutes, activeDayOfWeek, timetable, usageFactors, tariffs, activeCalendarDate, calendar]);
+  }, [rooms, roomInventory, simTimeMinutes, activeDayOfWeek, timetable, usageFactors, tariffs, activeCalendarDate, calendar, ratings]);
 
   // Rolling historical data
   const lastLoggedMinuteRef = useRef<number>(-1);

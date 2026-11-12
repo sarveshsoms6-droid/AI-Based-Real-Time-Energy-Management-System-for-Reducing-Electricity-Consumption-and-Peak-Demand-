@@ -192,7 +192,7 @@ export const OverviewDashboard: React.FC = () => {
           <div className="p-3.5 bg-slate-50 border border-border-soft rounded-xl space-y-1">
             <span className="text-[10px] text-slate-500 uppercase block">SAVED THIS MONTH</span>
             <div className="text-xl font-bold text-savings">{timetableSavings.savedKWhThisMonth} <span className="text-xs font-normal text-slate-500">kWh</span></div>
-            <div className="text-[10px] text-slate-500">₹{timetableSavings.savedCostThisMonthINR.toLocaleString()} (22 days)</div>
+            <div className="text-[10px] text-slate-500">₹{timetableSavings.savedCostThisMonthINR.toLocaleString()} (22 days est.)</div>
           </div>
 
           <div className="p-3.5 bg-slate-50 border border-border-soft rounded-xl space-y-1">

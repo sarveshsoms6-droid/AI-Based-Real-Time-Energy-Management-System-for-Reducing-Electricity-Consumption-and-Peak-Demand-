@@ -237,6 +237,16 @@ export interface TimetableEnergySavingsSummary {
   co2AvoidedThisMonthKg: number;
   percentageReduction: number;
   peakReductionKW: number;
+  peakPercentageReduction?: number;
+  baselinePeakDemandKW?: number;
+  optimizedPeakDemandKW?: number;
+  floor1BaselineKWh?: number;
+  floor2BaselineKWh?: number;
+  floor1ActualKWh?: number;
+  floor2ActualKWh?: number;
+  floor1SavedKWh?: number;
+  floor2SavedKWh?: number;
+  isScenarioEstimate?: boolean;
 
   // Breakdowns
   topWastingRooms: TopWastingRoomItem[];
@@ -244,10 +254,12 @@ export interface TimetableEnergySavingsSummary {
     roomCode: string;
     roomName: string;
     type: string;
+    floor?: number;
     baselineKWh: number;
     actualKWh: number;
     savedKWh: number;
     savedINR: number;
+    wasteKW?: number;
     status: TimetableScheduleStatus;
   }[];
   blockBreakdown: {
@@ -556,3 +568,22 @@ export interface BeforeAfterComparison {
   annualCostSavingsINR: number;
   percentageReduction: number;
 }
+
+// ==================== SIMULATED HARDWARE OUTPUT (ARDUINO UNO DEMONSTRATION) ====================
+
+export interface SimulatedHardwareReading {
+  id: string;
+  timestamp: string;
+  voltage: number;         // 10.57 V to 10.98 V (2 decimal places)
+  current: number;         // 0.42 A to 0.49 A (2 decimal places)
+  power: number;           // Motor Power = Voltage * Current (2 decimal places)
+  temperature: number;     // 25.0 °C to 26.0 °C (1 decimal place)
+  humidity: number;        // 50.0% to 60.0% (1 decimal place)
+  rawVoltage: number;      // Unrounded voltage value
+  rawCurrent: number;      // Unrounded current value
+  rawPower: number;        // Unrounded power = rawVoltage * rawCurrent
+  verificationPass: boolean;
+}
+
+export type HardwareIntervalMs = 1000 | 2000 | 5000;
+

@@ -19,6 +19,7 @@ import { AnomalyDetectionPage } from './pages/AnomalyDetectionPage';
 import { PeakOptimizationPage } from './pages/PeakOptimizationPage';
 import { EnergyAuditPage } from './pages/EnergyAuditPage';
 import { EnergyManagementPage } from './pages/EnergyManagementPage';
+import { HardwareOutputPage } from './pages/HardwareOutputPage';
 import { WhatIfSimulationPage } from './pages/WhatIfSimulationPage';
 import { EnergyReportsPage } from './pages/EnergyReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -51,6 +52,8 @@ const MainLayout: React.FC = () => {
         return <EnergyAuditPage onNavigateToWhatIf={() => setActivePage('what_if')} />;
       case 'energy_management':
         return <EnergyManagementPage />;
+      case 'hardware_output':
+        return <HardwareOutputPage />;
       case 'timetable':
         return <TimetablePage />;
       case 'what_if':
